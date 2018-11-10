@@ -1,0 +1,6 @@
+{
+    "board": "SparkFun:avr:promicro",
+    "configuration": "cpu=16MHzatmega32U4",
+    "port": "/dev/cu.usbmodemWUAR1",
+    "sketch": "arduino/cardoutput/cardoutput.ino"
+}

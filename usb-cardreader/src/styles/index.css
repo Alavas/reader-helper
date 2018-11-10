@@ -1,0 +1,26 @@
+@import url("https://fonts.googleapis.com/css?family=Roboto:300");
+@import url("https://fonts.googleapis.com/icon?family=Material+Icons");
+html {
+  height: 100%;
+  font-size: 14px;
+}
+
+body {
+  font-family: "Roboto" !important;
+  resize: both;
+  margin: 0;
+  padding: 0;
+  background-color: #efefef !important;
+}
+
+#root {
+  height: 100%;
+}
+
+.App {
+  margin-top: 25px;
+  text-align: center;
+  height: 100%;
+}
+
+/*# sourceMappingURL=index.css.map */
