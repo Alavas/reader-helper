@@ -1,6 +1,6 @@
 /*
  * USB Connected Wiegand Card reader
- * Outputs a JSON file via serial to webpage in format { "state": "CONNECTED", "bits": 26, "hex": "03C79A77"}
+ * Outputs a JSON file via serial to webpage in the format { "state": "CONNECTED", "bits": 26, "hex": "03C79A77"}
  */
 
 //https://github.com/webusb/arduino
