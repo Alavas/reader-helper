@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css?family=Roboto+Mono:300');
 @import url('https://fonts.googleapis.com/css?family=Roboto:300');
 @import url('https://fonts.googleapis.com/icon?family=Material+Icons');
 
@@ -7,7 +8,7 @@ html {
 	font-size: 14px;
 }
 body {
-	font-family: 'Roboto' !important;
+	font-family: 'Roboto';
 	//height: 100%;
 	resize: both;
 	margin: 0;
@@ -23,4 +24,8 @@ body {
 	margin-top: 25px;
 	text-align: center;
 	height: 100%;
+}
+
+.binary {
+	font-family: 'Roboto Mono';
 }

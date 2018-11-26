@@ -1,5 +1,5 @@
 import React, { Component } from 'react'
-import { Row, Input, CardPanel } from 'react-materialize'
+import { Row, Col, Input, CardPanel } from 'react-materialize'
 import Highlighter from 'react-highlight-words'
 import serial from './usb'
 
@@ -17,6 +17,11 @@ class Reader extends Component {
 			bits: '',
 			cardNumber: '',
 			cardBits: '',
+			decodeBinary: '',
+			siteStart: 0,
+			siteLength: 0,
+			cardStart: 0,
+			cardLength: 0,
 			display: false,
 			showSettings: false,
 			reverse: true
@@ -84,9 +89,13 @@ class Reader extends Component {
 	}
 
 	handleShowSettings() {
-		this.setState({
-			showSettings: !this.state.showSettings
-		})
+		this.setState(
+			{
+				showSettings: !this.state.showSettings,
+				cardNumber: ''
+			},
+			() => this.handleCardNumber()
+		)
 	}
 
 	handleUserInput(e) {
@@ -106,10 +115,12 @@ class Reader extends Component {
 	}
 
 	handleReverse() {
-		this.setState({
-			reverse: !this.state.reverse
-		})
-		this.handleHex(this.state.hexInput)
+		this.setState(
+			{
+				reverse: !this.state.reverse
+			},
+			() => this.handleHex(this.state.hexInput)
+		)
 	}
 
 	handleCardNumber(cardNumber) {
@@ -122,10 +133,13 @@ class Reader extends Component {
 
 	handleBits(inputBits) {
 		let cut = this.state.binary.length - inputBits
-		let binaryOut = this.state.binary.slice(cut)
+		let dispBinary = this.state.binary.slice(cut)
+		let decodeBinary = '*'.repeat(inputBits)
+		console.log(decodeBinary)
 		this.setState({
 			bits: inputBits,
-			dispBinary: binaryOut
+			dispBinary,
+			decodeBinary
 		})
 	}
 
@@ -248,13 +262,24 @@ class Reader extends Component {
 								/>
 							</React.Fragment>
 						)}
-						<Input
-							id="CARD"
-							onChange={this.handleUserInput}
-							s={4}
-							label="Card Number"
-							value={this.state.cardNumber}
-						/>
+						{this.state.showSettings ? (
+							<React.Fragment>
+								<div className="col s4">
+									<label className="active">Card Number</label>
+									<p>{this.state.cardNumber}</p>
+								</div>
+							</React.Fragment>
+						) : (
+							<React.Fragment>
+								<Input
+									id="CARD"
+									onChange={this.handleUserInput}
+									s={4}
+									label="Card Number"
+									value={this.state.cardNumber}
+								/>
+							</React.Fragment>
+						)}
 					</Row>
 					<Row style={this.state.display ? null : { display: 'none' }}>
 						<div className="col s6">
@@ -263,7 +288,10 @@ class Reader extends Component {
 							</label>
 							<p id="parsedHex">{this.state.dispHex}</p>
 						</div>
-						<div className="col s6">
+						<div
+							style={this.state.reverse ? null : { display: 'none' }}
+							className="col s6"
+						>
 							<label className="active" htmlFor="reverseHex">
 								Reversed Hex
 							</label>
@@ -274,6 +302,7 @@ class Reader extends Component {
 							<label htmlFor="bits">Binary</label>
 							<p>
 								<Highlighter
+									className="binary"
 									searchWords={[this.state.cardBits]}
 									autoEscape={true}
 									textToHighlight={this.state.dispBinary}
@@ -281,10 +310,38 @@ class Reader extends Component {
 								/>
 							</p>
 						</div>
+						<div
+							style={this.state.showSettings ? null : { display: 'none' }}
+							className="col s12 binary"
+						>
+							{this.state.decodeBinary}
+						</div>
 						<div className="col s12 divider" />
 					</Row>
 					<Row style={this.state.showSettings ? null : { display: 'none' }}>
-						Reader Settings Placeholder
+						<div style={{ paddingTop: '15px' }} className="col s1">
+							Site Code
+						</div>
+						<div className="col s2">
+							<label className="active">Start Bit</label>
+							<input value={this.state.siteStart} min="0" type="number" />
+						</div>
+						<div className="col s2">
+							<label className="active">Number Bits</label>
+							<input value={this.state.siteLength} min="0" type="number" />
+						</div>
+						<Col s={1} />
+						<div style={{ paddingTop: '15px' }} className="col s2">
+							Card Number
+						</div>
+						<div className="col s2">
+							<label className="active">Start Bit</label>
+							<input value={this.state.cardStart} min="0" type="number" />
+						</div>
+						<div className="col s2">
+							<label className="active">Number Bits</label>
+							<input value={this.state.cardLength} min="0" type="number" />
+						</div>
 						<div className="col s12 divider" />
 					</Row>
 				</CardPanel>
