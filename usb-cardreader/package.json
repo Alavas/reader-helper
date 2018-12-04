@@ -1,27 +1,31 @@
 {
-  "name": "usb-cardreader",
-  "version": "0.1.0",
-  "private": true,
-  "dependencies": {
-    "react": "^16.6.0",
-    "react-dom": "^16.6.0",
-    "react-highlight-words": "^0.14.0",
-    "react-materialize": "^2.4.8",
-    "react-scripts": "2.1.0"
-  },
-  "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject"
-  },
-  "eslintConfig": {
-    "extends": "react-app"
-  },
-  "browserslist": [
-    ">0.2%",
-    "not dead",
-    "not ie <= 11",
-    "not op_mini all"
-  ]
+	"name": "usb-cardreader",
+	"version": "0.1.0",
+	"private": true,
+	"dependencies": {
+		"react": "^16.6.0",
+		"react-dom": "^16.6.0",
+		"react-highlight-words": "^0.14.0",
+		"react-materialize": "^2.4.8",
+		"react-scripts": "2.1.0"
+	},
+	"scripts": {
+		"start": "react-scripts start",
+		"build": "react-scripts build",
+		"test": "react-scripts test",
+		"eject": "react-scripts eject"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/Alavas/USB_Card_Reader.git"
+	},
+	"eslintConfig": {
+		"extends": "react-app"
+	},
+	"browserslist": [
+		">0.2%",
+		"not dead",
+		"not ie <= 11",
+		"not op_mini all"
+	]
 }
