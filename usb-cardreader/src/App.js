@@ -1,6 +1,6 @@
 import React, { Component, Fragment } from 'react'
 import { Row, Col, Input, CardPanel } from 'react-materialize'
-import Highlighter from 'react-highlight-words'
+import Highlight from './Highlight'
 import serial from './usb'
 
 let USBDevice
@@ -9,25 +9,31 @@ class Reader extends Component {
 	constructor(props) {
 		super(props)
 		this.state = {
-			inputHex: '03C79A77',
+			inputHex: '',
 			dispHex: '',
 			orderedHex: '',
+			bits: '',
 			binary: '',
 			dispBinary: '',
-			bits: '',
+			decodeBinary: [],
+			decodeLength: 0,
 			cardNumber: '',
 			cardBits: '',
-			decodeBinary: '',
-			siteStart: 0,
-			siteLength: 0,
 			cardStart: 0,
 			cardLength: 0,
+			cardChunk: '',
+			facilityChunk: '',
+			facilityStart: 0,
+			facilityLength: 0,
+			facilityCode: '',
+			facilityBits: '',
 			showDecode: false,
 			showSettings: false,
 			reverse: true
-		}
+		} //Sample - 77 9A C7 03
 		this.handleUserInput = this.handleUserInput.bind(this)
 		this.handleCardNumber = this.handleCardNumber.bind(this)
+		this.handleFacilityCode = this.handleFacilityCode.bind(this)
 		this.handleHex = this.handleHex.bind(this)
 		this.handleBits = this.handleBits.bind(this)
 		this.handleDecodeBits = this.handleDecodeBits.bind(this)
@@ -90,6 +96,41 @@ class Reader extends Component {
 		)
 	}
 
+	//Preprocess user inputs to simply logic used elsewhere.
+	handleUserInput(e) {
+		switch (e.target.id) {
+			case 'HEX':
+				this.handleHex(e.target.value)
+				break
+			case 'BITS':
+				this.handleBits(e.target.value)
+				break
+			case 'CARD':
+				this.handleCardNumber(e.target.value)
+				break
+			case 'FACILITY':
+				this.handleFacilityCode(e.target.value)
+				break
+			case 'SITESTART':
+				this.handleSettings({ key: 'facilityStart', value: e.target.value })
+				break
+			case 'SITELENGTH':
+				this.handleSettings({
+					key: 'facilityLength',
+					value: e.target.value
+				})
+				break
+			case 'CARDSTART':
+				this.handleSettings({ key: 'cardStart', value: e.target.value })
+				break
+			case 'CARDLENGTH':
+				this.handleSettings({ key: 'cardLength', value: e.target.value })
+				break
+			default:
+				break
+		}
+	}
+
 	handleSettings(settings) {
 		//TODO: logic needed to prevent the site code and card number from overlapping.
 		this.setState(
@@ -104,20 +145,42 @@ class Reader extends Component {
 		//Only process if the settings section is being displayed.
 		if (this.state.showSettings) {
 			let decodeBinary = '*'.repeat(this.state.bits)
-			let arr = decodeBinary.split('')
-			let site = 'S'.repeat(this.state.siteLength)
-			let card = 'C'.repeat(this.state.cardLength)
+			decodeBinary = decodeBinary.split('')
+			let facilityChunk = 'F'.repeat(this.state.facilityLength)
+			let cardChunk = 'C'.repeat(this.state.cardLength)
 			if (this.state.cardLength > 0)
-				arr.splice(this.state.cardStart, this.state.cardLength, card)
-			if (this.state.siteLength > 0)
-				arr.splice(this.state.siteStart, this.state.siteLength, site)
-			decodeBinary = arr.join('')
+				decodeBinary.splice(
+					this.state.cardStart,
+					this.state.cardLength,
+					cardChunk
+				)
+			if (this.state.facilityLength > 0)
+				decodeBinary.splice(
+					this.state.facilityStart,
+					this.state.facilityLength,
+					facilityChunk
+				)
+			let facilityBits = this.state.dispBinary.slice(
+				this.state.facilityStart,
+				this.state.facilityStart + this.state.facilityLength
+			)
 			let cardBits = this.state.dispBinary.slice(
 				this.state.cardStart,
 				this.state.cardStart + this.state.cardLength
 			)
+			let decodeLength = decodeBinary.join('').length
 			let cardNumber = parseInt(cardBits, 2) || 0
-			this.setState({ decodeBinary, cardBits, cardNumber })
+			let facilityCode = parseInt(facilityBits, 2) || 0
+			this.setState({
+				decodeBinary,
+				decodeLength,
+				cardBits,
+				facilityBits,
+				cardNumber,
+				facilityCode,
+				facilityChunk,
+				cardChunk
+			})
 		}
 	}
 
@@ -125,39 +188,19 @@ class Reader extends Component {
 		this.setState(
 			{
 				showSettings: !this.state.showSettings,
-				cardNumber: ''
+				facilityCode: '',
+				cardNumber: '',
+				facilityStart: 0,
+				facilityLength: 0,
+				cardStart: 0,
+				cardLength: 0
 			},
-			() => this.handleCardNumber()
+			() => {
+				this.handleCardNumber()
+				this.handleFacilityCode()
+				this.handleDecodeBits()
+			}
 		)
-	}
-
-	//Preprocess user inputs to simply logic used elsewhere.
-	handleUserInput(e) {
-		switch (e.target.id) {
-			case 'HEX':
-				this.handleHex(e.target.value)
-				break
-			case 'BITS':
-				this.handleBits(e.target.value)
-				break
-			case 'CARD':
-				this.handleCardNumber(e.target.value)
-				break
-			case 'SITESTART':
-				this.handleSettings({ key: 'siteStart', value: e.target.value })
-				break
-			case 'SITELENGTH':
-				this.handleSettings({ key: 'siteLength', value: e.target.value })
-				break
-			case 'CARDSTART':
-				this.handleSettings({ key: 'cardStart', value: e.target.value })
-				break
-			case 'CARDLENGTH':
-				this.handleSettings({ key: 'cardLength', value: e.target.value })
-				break
-			default:
-				break
-		}
 	}
 
 	handleReverse() {
@@ -170,10 +213,18 @@ class Reader extends Component {
 	}
 
 	handleCardNumber(cardNumber) {
-		let binary = parseInt(cardNumber, 10).toString(2)
+		let cardBits = parseInt(cardNumber, 10).toString(2)
 		this.setState({
-			cardNumber: cardNumber,
-			cardBits: binary
+			cardNumber,
+			cardBits
+		})
+	}
+
+	handleFacilityCode(facilityCode) {
+		let facilityBits = parseInt(facilityCode, 10).toString(2)
+		this.setState({
+			facilityCode,
+			facilityBits
 		})
 	}
 
@@ -238,15 +289,7 @@ class Reader extends Component {
 	render() {
 		return (
 			<div>
-				<CardPanel
-					style={{
-						width: '60%',
-						minWidth: '700px',
-						marginLeft: 'auto',
-						marginRight: 'auto',
-						marginTop: '50px'
-					}}
-				>
+				<CardPanel className="decoder">
 					<Row>
 						<Input
 							s={4}
@@ -280,7 +323,7 @@ class Reader extends Component {
 					<Row>
 						{this.state.connected ? (
 							<Fragment>
-								<div className="col s6">
+								<div className="col s5">
 									<label className="active" htmlFor="inputHex">
 										Raw Hex Value
 									</label>
@@ -298,7 +341,7 @@ class Reader extends Component {
 								<Input
 									id="HEX"
 									onChange={this.handleUserInput}
-									s={6}
+									s={5}
 									label="Raw Hex Value"
 									value={this.state.inputHex}
 								/>
@@ -311,9 +354,14 @@ class Reader extends Component {
 								/>
 							</Fragment>
 						)}
+						<Col s={1} />
 						{this.state.showSettings ? (
 							<Fragment>
-								<div className="col s4">
+								<div className="col s2">
+									<label className="active">Facility Code</label>
+									<p>{this.state.facilityCode}</p>
+								</div>
+								<div className="col s2">
 									<label className="active">Card Number</label>
 									<p>{this.state.cardNumber}</p>
 								</div>
@@ -321,9 +369,16 @@ class Reader extends Component {
 						) : (
 							<Fragment>
 								<Input
+									id="FACILITY"
+									onChange={this.handleUserInput}
+									s={2}
+									label="Facility Code"
+									value={this.state.facilityCode}
+								/>
+								<Input
 									id="CARD"
 									onChange={this.handleUserInput}
-									s={4}
+									s={2}
 									label="Card Number"
 									value={this.state.cardNumber}
 								/>
@@ -349,13 +404,11 @@ class Reader extends Component {
 						<div className="col s12 divider" style={{ margin: '5px' }} />
 						<div className="col s12">
 							<label htmlFor="bits">Binary</label>
-							<p>
-								<Highlighter
-									className="binary"
-									searchWords={[this.state.cardBits]}
-									autoEscape={true}
-									textToHighlight={this.state.dispBinary}
-									unhighlightStyle={{ color: 'black' }}
+							<p className="binary">
+								<Highlight
+									binary={this.state.dispBinary}
+									card={this.state.cardBits}
+									facility={this.state.facilityBits}
 								/>
 							</p>
 						</div>
@@ -363,28 +416,42 @@ class Reader extends Component {
 							style={
 								!this.state.showSettings
 									? { display: 'none' }
-									: this.state.decodeBinary.length > this.state.bits
+									: this.state.decodeLength > this.state.bits
 									? { color: 'red', fontWeight: 'bold' }
-									: { color: 'green' }
+									: null
 							}
 							className="col s12 binary"
 						>
-							{this.state.decodeBinary}
+							{this.state.decodeBinary.map((chunk, index) => (
+								<span
+									style={
+										chunk === this.state.facilityChunk
+											? { backgroundColor: 'lightgreen' }
+											: chunk === this.state.cardChunk
+											? { backgroundColor: 'yellow' }
+											: null
+									}
+									key={index}
+								>
+									{chunk}
+								</span>
+							))}
 						</div>
 						<div className="col s12 divider" />
 					</Row>
 					<Row
 						style={this.state.showSettings ? null : { display: 'none' }}
 					>
+						<Col s={1} />
 						<div style={{ paddingTop: '15px' }} className="col s1">
-							Site Code
+							Facility Code
 						</div>
 						<div className="col s2">
 							<label className="active">Start Bit</label>
 							<input
 								id="SITESTART"
 								onChange={this.handleUserInput}
-								value={this.state.siteStart}
+								value={this.state.facilityStart}
 								min="0"
 								type="number"
 							/>
@@ -394,12 +461,12 @@ class Reader extends Component {
 							<input
 								id="SITELENGTH"
 								onChange={this.handleUserInput}
-								value={this.state.siteLength}
+								value={this.state.facilityLength}
 								min="0"
 								type="number"
 							/>
 						</div>
-						<Col s={2} />
+
 						<div style={{ paddingTop: '15px' }} className="col s1">
 							Card Number
 						</div>
