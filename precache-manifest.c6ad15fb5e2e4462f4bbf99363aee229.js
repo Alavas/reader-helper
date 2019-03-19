@@ -16,7 +16,7 @@ self.__precacheManifest = [
     "url": "/reader-helper/static/css/main.b19222fa.chunk.css"
   },
   {
-    "revision": "b68962567f161bf401e381adefedd45c",
+    "revision": "a49fd244372c2355347ab44d2f4deff4",
     "url": "/reader-helper/index.html"
   }
 ];
