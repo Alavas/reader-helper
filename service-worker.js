@@ -14,7 +14,7 @@
 importScripts("https://storage.googleapis.com/workbox-cdn/releases/3.6.3/workbox-sw.js");
 
 importScripts(
-  "/usb_card_reader/precache-manifest.a02af2552589e726f084426a2ce6f2dc.js"
+  "/usb_card_reader/precache-manifest.c7e53f8aff35171afc3dac8c50081359.js"
 );
 
 workbox.clientsClaim();

@@ -16,7 +16,7 @@ self.__precacheManifest = [
     "url": "/usb_card_reader/static/css/main.b19222fa.chunk.css"
   },
   {
-    "revision": "c2fe045ca82d0f4a806005e6a9ef3a5f",
+    "revision": "04654de3fb2d33de6d6307318a619bb1",
     "url": "/usb_card_reader/index.html"
   }
 ];
