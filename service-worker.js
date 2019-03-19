@@ -14,7 +14,7 @@
 importScripts("https://storage.googleapis.com/workbox-cdn/releases/3.6.3/workbox-sw.js");
 
 importScripts(
-  "/usb_card_reader/precache-manifest.c7e53f8aff35171afc3dac8c50081359.js"
+  "/USB_Card_Reader/precache-manifest.c5d16ce3a1e766c06523e249073f43f0.js"
 );
 
 workbox.clientsClaim();
@@ -28,7 +28,7 @@ self.__precacheManifest = [].concat(self.__precacheManifest || []);
 workbox.precaching.suppressWarnings();
 workbox.precaching.precacheAndRoute(self.__precacheManifest, {});
 
-workbox.routing.registerNavigationRoute("/usb_card_reader/index.html", {
+workbox.routing.registerNavigationRoute("/USB_Card_Reader/index.html", {
   
   blacklist: [/^\/_/,/\/[^\/]+\.[^\/]+$/],
 });
