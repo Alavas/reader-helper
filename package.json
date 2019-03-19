@@ -16,7 +16,7 @@
 		"predeploy": "npm run build",
 		"deploy": "gh-pages -d build"
 	},
-	"homepage": "https://alavas.github.io/usb_card_reader",
+	"homepage": "http://alavas.github.io/USB_Card_Reader",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/Alavas/USB_Card_Reader.git"
