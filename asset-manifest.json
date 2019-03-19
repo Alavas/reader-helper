@@ -1,13 +1,13 @@
 {
-  "main.css": "/USB_Card_Reader/static/css/main.b19222fa.chunk.css",
-  "main.js": "/USB_Card_Reader/static/js/main.8487c86f.chunk.js",
-  "main.js.map": "/USB_Card_Reader/static/js/main.8487c86f.chunk.js.map",
-  "runtime~main.js": "/USB_Card_Reader/static/js/runtime~main.332b1407.js",
-  "runtime~main.js.map": "/USB_Card_Reader/static/js/runtime~main.332b1407.js.map",
-  "static/js/2.a71dd8ef.chunk.js": "/USB_Card_Reader/static/js/2.a71dd8ef.chunk.js",
-  "static/js/2.a71dd8ef.chunk.js.map": "/USB_Card_Reader/static/js/2.a71dd8ef.chunk.js.map",
-  "index.html": "/USB_Card_Reader/index.html",
-  "precache-manifest.c5d16ce3a1e766c06523e249073f43f0.js": "/USB_Card_Reader/precache-manifest.c5d16ce3a1e766c06523e249073f43f0.js",
-  "service-worker.js": "/USB_Card_Reader/service-worker.js",
-  "static/css/main.b19222fa.chunk.css.map": "/USB_Card_Reader/static/css/main.b19222fa.chunk.css.map"
+  "main.css": "/reader-helper/static/css/main.b19222fa.chunk.css",
+  "main.js": "/reader-helper/static/js/main.c371975f.chunk.js",
+  "main.js.map": "/reader-helper/static/js/main.c371975f.chunk.js.map",
+  "runtime~main.js": "/reader-helper/static/js/runtime~main.c9b2a817.js",
+  "runtime~main.js.map": "/reader-helper/static/js/runtime~main.c9b2a817.js.map",
+  "static/js/2.a71dd8ef.chunk.js": "/reader-helper/static/js/2.a71dd8ef.chunk.js",
+  "static/js/2.a71dd8ef.chunk.js.map": "/reader-helper/static/js/2.a71dd8ef.chunk.js.map",
+  "index.html": "/reader-helper/index.html",
+  "precache-manifest.5d5dc9283efbdf1eb5ea61382b7b76ac.js": "/reader-helper/precache-manifest.5d5dc9283efbdf1eb5ea61382b7b76ac.js",
+  "service-worker.js": "/reader-helper/service-worker.js",
+  "static/css/main.b19222fa.chunk.css.map": "/reader-helper/static/css/main.b19222fa.chunk.css.map"
 }
