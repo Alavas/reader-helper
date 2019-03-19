@@ -1,6 +1,6 @@
 import React, { Component, Fragment } from 'react'
-import { Row, Col, Input, CardPanel } from 'react-materialize'
-import Highlight from './Highlight'
+import { Card, Col, Input, Row } from 'react-materialize'
+import Highlight from './components/Highlight'
 import serial from './usb'
 
 let USBDevice
@@ -269,8 +269,8 @@ class Reader extends Component {
 			let binaryOut = orderedHex.bin.slice(cut)
 			this.setState(
 				{
-					inputHex: inputHex,
-					dispHex: dispHex,
+					inputHex,
+					dispHex,
 					orderedHex: orderedHex.hex,
 					binary: orderedHex.bin,
 					dispBinary: binaryOut,
@@ -280,7 +280,7 @@ class Reader extends Component {
 			)
 		} else {
 			this.setState({
-				inputHex: inputHex,
+				inputHex,
 				showDecode: false
 			})
 		}
@@ -289,7 +289,7 @@ class Reader extends Component {
 	render() {
 		return (
 			<div>
-				<CardPanel className="decoder">
+				<Card title="Card Decoder Tool" className="decoder">
 					<Row>
 						<Input
 							s={4}
@@ -492,7 +492,7 @@ class Reader extends Component {
 						</div>
 						<div className="col s12 divider" />
 					</Row>
-				</CardPanel>
+				</Card>
 			</div>
 		)
 	}

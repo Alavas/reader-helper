@@ -2,27 +2,23 @@
 @import url('https://fonts.googleapis.com/css?family=Roboto:300');
 @import url('https://fonts.googleapis.com/icon?family=Material+Icons');
 
-//Baseline Styles
 html {
-	height: 100%;
 	font-size: 14.5px;
 }
+
 body {
 	font-family: 'Roboto';
 	resize: both;
 	margin: 0;
 	padding: 0;
-	background-color: #efefef !important;
-}
-
-#root {
-	height: 100%;
+	background-color: #0d1620 !important;
 }
 
 .App {
 	margin-top: 25px;
 	text-align: center;
-	height: 100%;
+	height: 100vh;
+	width: 100vw;
 }
 
 .decoder {
