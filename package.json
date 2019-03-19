@@ -16,10 +16,10 @@
 		"predeploy": "npm run build",
 		"deploy": "gh-pages -d build"
 	},
-	"homepage": "http://alavas.github.io/USB_Card_Reader",
+	"homepage": "http://alavas.github.io/reader-helper",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/Alavas/USB_Card_Reader.git"
+		"url": "https://github.com/Alavas/reader-helper.git"
 	},
 	"eslintConfig": {
 		"extends": "react-app"
