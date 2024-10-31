@@ -1,13 +1,13 @@
 {
-  "main.css": "/reader-helper/static/css/main.b19222fa.chunk.css",
-  "main.js": "/reader-helper/static/js/main.c371975f.chunk.js",
-  "main.js.map": "/reader-helper/static/js/main.c371975f.chunk.js.map",
-  "runtime~main.js": "/reader-helper/static/js/runtime~main.c9b2a817.js",
-  "runtime~main.js.map": "/reader-helper/static/js/runtime~main.c9b2a817.js.map",
-  "static/js/2.a71dd8ef.chunk.js": "/reader-helper/static/js/2.a71dd8ef.chunk.js",
-  "static/js/2.a71dd8ef.chunk.js.map": "/reader-helper/static/js/2.a71dd8ef.chunk.js.map",
-  "index.html": "/reader-helper/index.html",
-  "precache-manifest.c6ad15fb5e2e4462f4bbf99363aee229.js": "/reader-helper/precache-manifest.c6ad15fb5e2e4462f4bbf99363aee229.js",
-  "service-worker.js": "/reader-helper/service-worker.js",
-  "static/css/main.b19222fa.chunk.css.map": "/reader-helper/static/css/main.b19222fa.chunk.css.map"
+  "files": {
+    "main.css": "/reader-helper/static/css/main.7c899c62.css",
+    "main.js": "/reader-helper/static/js/main.2942b788.js",
+    "index.html": "/reader-helper/index.html",
+    "main.7c899c62.css.map": "/reader-helper/static/css/main.7c899c62.css.map",
+    "main.2942b788.js.map": "/reader-helper/static/js/main.2942b788.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.7c899c62.css",
+    "static/js/main.2942b788.js"
+  ]
 }
