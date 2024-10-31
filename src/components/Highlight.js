@@ -1,12 +1,13 @@
 import React, { Fragment } from 'react'
 
-const Highlight = props => {
+const Highlight = (props) => {
+	const fontSize = props.fontSize
 	const rawCardBits = props.binary
 	const cardNumBits = props.card
 	const facilityNumBits = props.facility
 	let searchBits = rawCardBits.split('')
-	let cardStart = rawCardBits.lastIndexOf(cardNumBits)
-	let facilityStart = rawCardBits.lastIndexOf(facilityNumBits)
+	let cardStart = rawCardBits.indexOf(cardNumBits)
+	let facilityStart = rawCardBits.indexOf(facilityNumBits)
 	if (cardStart >= 0) {
 		searchBits.splice(cardStart, cardNumBits.length, cardNumBits)
 	}
@@ -20,10 +21,10 @@ const Highlight = props => {
 					<span
 						style={
 							chunk === facilityNumBits
-								? { backgroundColor: 'lightgreen' }
+								? { backgroundColor: 'lightgreen', fontSize }
 								: chunk === cardNumBits
-								? { backgroundColor: 'yellow' }
-								: null
+								? { backgroundColor: 'yellow', fontSize }
+								: { fontSize }
 						}
 						key={index}
 					>

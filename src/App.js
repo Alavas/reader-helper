@@ -1,251 +1,243 @@
-import React, { Component, Fragment } from 'react'
-import { Card, Col, Input, Row } from 'react-materialize'
-import Highlight from './components/Highlight'
+import React, { useReducer, useEffect, Fragment, useRef } from 'react'
+import { Button, Card, Col, Input, Row } from 'react-materialize'
 import serial from './usb'
+import Highlight from './components/Highlight'
+import * as actions from './actions'
+import { cardReducer, readerSettingsReducer, settingsReducer } from './reducer'
+import {
+	COMMON_CARD_FORMATS,
+	INITIAL_CARD_STATE,
+	INITIAL_READER_SETTING_STATE,
+	INITIAL_SETTINGS_STATE,
+} from './constants'
+import { useReactToPrint } from 'react-to-print'
 
 let USBDevice
 
-class Reader extends Component {
-	constructor(props) {
-		super(props)
-		this.state = {
-			inputHex: '',
-			dispHex: '',
-			orderedHex: '',
-			bits: '',
-			binary: '',
-			dispBinary: '',
-			decodeBinary: [],
-			decodeLength: 0,
-			cardNumber: '',
-			cardBits: '',
-			cardStart: 0,
-			cardLength: 0,
-			cardChunk: '',
-			facilityChunk: '',
-			facilityStart: 0,
-			facilityLength: 0,
-			facilityCode: '',
-			facilityBits: '',
-			showDecode: false,
-			showSettings: false,
-			reverse: true
-		} //Sample - 77 9A C7 03
-		this.handleUserInput = this.handleUserInput.bind(this)
-		this.handleCardNumber = this.handleCardNumber.bind(this)
-		this.handleFacilityCode = this.handleFacilityCode.bind(this)
-		this.handleHex = this.handleHex.bind(this)
-		this.handleBits = this.handleBits.bind(this)
-		this.handleDecodeBits = this.handleDecodeBits.bind(this)
-		this.handleReverse = this.handleReverse.bind(this)
-		this.handleSettings = this.handleSettings.bind(this)
-		this.handleShowSettings = this.handleShowSettings.bind(this)
-		this.connectButton = this.connectButton.bind(this)
-		this.connectUSB = this.connectUSB.bind(this)
-	}
+const Reader = () => {
+	const contentRef = useRef(null)
+	const reactToPrintFn = useReactToPrint({ contentRef })
 
-	connectButton() {
+	const [cardState, cardDispatch] = useReducer(cardReducer, INITIAL_CARD_STATE)
+	const [readerSettingsState, readerSettingDispatch] = useReducer(
+		readerSettingsReducer,
+		INITIAL_READER_SETTING_STATE
+	)
+	const [settingsState, settingsDispatch] = useReducer(
+		settingsReducer,
+		INITIAL_SETTINGS_STATE
+	)
+	useEffect(() => {
+		handleDecodeBits()
+	}, [readerSettingsState, settingsState])
+
+	const connectButton = () => {
 		if (USBDevice) {
 			USBDevice.disconnect()
 			USBDevice = null
-			this.setState({
-				connected: false,
-				reverse: true
-			})
+			settingsDispatch(actions.setConnected(false))
+			settingsDispatch(actions.setReverse(true))
 		} else {
 			serial
 				.requestPort()
-				.then(selectedPort => {
+				.then((selectedPort) => {
 					USBDevice = selectedPort
-					this.connectUSB()
-					this.setState({
-						connected: true,
-						reverse: false
-					})
+					connectUSB()
+					settingsDispatch(actions.setConnected(true))
+					settingsDispatch(actions.setReverse(false))
 				})
-				.catch(error => {
-					this.setState({
-						connected: false
-					})
+				.catch(() => {
+					settingsDispatch(actions.setConnected(false))
 					window.Materialize.toast('No USB device selected.', 5000)
 				})
 		}
 	}
 
-	connectUSB() {
+	const connectUSB = () => {
 		USBDevice.connect().then(
 			() => {
-				USBDevice.onReceive = data => {
+				USBDevice.onReceive = (data) => {
 					let textDecoder = new TextDecoder()
 					let cardJSON = textDecoder.decode(data)
 					cardJSON = JSON.parse(cardJSON)
-					this.setState({
-						readerBits: cardJSON.bits,
-						readerHex: cardJSON.hex
-					})
-					this.handleHex(cardJSON.hex)
-					this.handleBits(cardJSON.bits)
+					handleHex(cardJSON.hex)
+					handleBits(cardJSON.bits)
 				}
-				USBDevice.onReceiveError = error => {
+				USBDevice.onReceiveError = (error) => {
 					window.Materialize.toast(error, 5000)
 				}
 			},
-			error => {
+			(error) => {
 				window.Materialize.toast(error, 5000)
 			}
 		)
 	}
 
-	//Preprocess user inputs to simply logic used elsewhere.
-	handleUserInput(e) {
+	const handleUserInput = (e) => {
+		let readerSettings = readerSettingsState
 		switch (e.target.id) {
 			case 'HEX':
-				this.handleHex(e.target.value)
+				handleHex(e.target.value)
 				break
 			case 'BITS':
-				this.handleBits(e.target.value)
+				handleBits(parseInt(e.target.value))
 				break
 			case 'CARD':
-				this.handleCardNumber(e.target.value)
+				handleCardNumber(parseInt(e.target.value))
 				break
 			case 'FACILITY':
-				this.handleFacilityCode(e.target.value)
+				handleFacilityCode(parseInt(e.target.value))
 				break
 			case 'SITESTART':
-				this.handleSettings({ key: 'facilityStart', value: e.target.value })
+				readerSettings.facilityStart = parseInt(e.target.value)
+				readerSettingDispatch(actions.setSettings(readerSettings))
 				break
 			case 'SITELENGTH':
-				this.handleSettings({
-					key: 'facilityLength',
-					value: e.target.value
-				})
+				readerSettings.facilityLength = parseInt(e.target.value)
+				readerSettingDispatch(actions.setSettings(readerSettings))
 				break
 			case 'CARDSTART':
-				this.handleSettings({ key: 'cardStart', value: e.target.value })
+				readerSettings.cardStart = parseInt(e.target.value)
+				readerSettingDispatch(actions.setSettings(readerSettings))
 				break
 			case 'CARDLENGTH':
-				this.handleSettings({ key: 'cardLength', value: e.target.value })
+				readerSettings.cardLength = parseInt(e.target.value)
+				readerSettingDispatch(actions.setSettings(readerSettings))
+				break
+			case 'FORMAT':
+				let format = COMMON_CARD_FORMATS.find(
+					(f) => f.format === e.target.value
+				)
+				readerSettings.facilityStart = format.fcStart
+				readerSettings.facilityLength = format.fcLength
+				readerSettings.cardStart = format.cnStart
+				readerSettings.cardLength = format.cnLength
+				readerSettingDispatch(actions.setSettings(readerSettings))
 				break
 			default:
 				break
 		}
 	}
 
-	handleSettings(settings) {
-		//TODO: logic needed to prevent the site code and card number from overlapping.
-		this.setState(
-			{
-				[settings.key]: parseInt(settings.value, 10)
-			},
-			() => this.handleDecodeBits()
-		)
-	}
-
-	handleDecodeBits() {
-		//Only process if the settings section is being displayed.
-		if (this.state.showSettings) {
-			let decodeBinary = '*'.repeat(this.state.bits)
-			decodeBinary = decodeBinary.split('')
-			let facilityChunk = 'F'.repeat(this.state.facilityLength)
-			let cardChunk = 'C'.repeat(this.state.cardLength)
-			if (this.state.cardLength > 0)
+	const handleDecodeBits = () => {
+		if (settingsState.showSettings) {
+			let decodeBinaryRaw = '*'.repeat(cardState.bits)
+			let decodeBinary = decodeBinaryRaw.split('')
+			let facilityChunk = 'F'.repeat(readerSettingsState.facilityLength)
+			let cardChunk = 'C'.repeat(readerSettingsState.cardLength)
+			let fcStart = readerSettingsState.facilityStart - 1
+			let cnStart = readerSettingsState.cardStart - 1
+			if (
+				readerSettingsState.cardLength > 0 &&
+				readerSettingsState.cardStart > 0
+			)
+				decodeBinary.splice(cnStart, readerSettingsState.cardLength, cardChunk)
+			if (
+				readerSettingsState.facilityLength > 0 &&
+				readerSettingsState.facilityStart > 0
+			)
 				decodeBinary.splice(
-					this.state.cardStart,
-					this.state.cardLength,
-					cardChunk
-				)
-			if (this.state.facilityLength > 0)
-				decodeBinary.splice(
-					this.state.facilityStart,
-					this.state.facilityLength,
+					fcStart,
+					readerSettingsState.facilityLength,
 					facilityChunk
 				)
-			let facilityBits = this.state.dispBinary.slice(
-				this.state.facilityStart,
-				this.state.facilityStart + this.state.facilityLength
-			)
-			let cardBits = this.state.dispBinary.slice(
-				this.state.cardStart,
-				this.state.cardStart + this.state.cardLength
-			)
+			// Are we using inverted bits?
+			let facilityBits = settingsState.invertBits
+				? cardState.invertedBinary.slice(
+						fcStart,
+						fcStart + readerSettingsState.facilityLength
+				  )
+				: cardState.dispBinary.slice(
+						fcStart,
+						fcStart + readerSettingsState.facilityLength
+				  )
+			let cardBits = settingsState.invertBits
+				? cardState.invertedBinary.slice(
+						cnStart,
+						cnStart + readerSettingsState.cardLength
+				  )
+				: cardState.dispBinary.slice(
+						cnStart,
+						cnStart + readerSettingsState.cardLength
+				  )
 			let decodeLength = decodeBinary.join('').length
 			let cardNumber = parseInt(cardBits, 2) || 0
 			let facilityCode = parseInt(facilityBits, 2) || 0
-			this.setState({
-				decodeBinary,
-				decodeLength,
-				cardBits,
-				facilityBits,
-				cardNumber,
-				facilityCode,
-				facilityChunk,
-				cardChunk
-			})
+			let card = cardState
+			card.decodeBinary = decodeBinary
+			card.decodeLength = decodeLength
+			card.cardNumber = cardNumber
+			card.facilityCode = facilityCode
+			card.cardBits = cardBits
+			card.cardChunk = cardChunk
+			card.facilityBits = facilityBits
+			card.facilityChunk = facilityChunk
+			cardDispatch(actions.setCard(card))
 		}
 	}
 
-	handleShowSettings() {
-		this.setState(
-			{
-				showSettings: !this.state.showSettings,
-				facilityCode: '',
-				cardNumber: '',
-				facilityStart: 0,
-				facilityLength: 0,
-				cardStart: 0,
-				cardLength: 0
-			},
-			() => {
-				this.handleCardNumber()
-				this.handleFacilityCode()
-				this.handleDecodeBits()
-			}
-		)
+	const handleShowSettings = () => {
+		settingsDispatch(actions.setShowSettings(!settingsState.showSettings))
+		let card = cardState
+		card.cardNumber = null
+		card.facilityCode = null
+		cardDispatch(actions.setCard(card))
+		let readerSettings = readerSettingsState
+		readerSettings.facilityStart = 0
+		readerSettings.facilityLength = 0
+		readerSettings.cardStart = 0
+		readerSettings.cardLength = 0
+		readerSettingDispatch(actions.setSettings(readerSettings))
+		handleFacilityCode(null)
+		handleCardNumber(null)
+		handleDecodeBits()
 	}
 
-	handleReverse() {
-		this.setState(
-			{
-				reverse: !this.state.reverse
-			},
-			() => this.handleHex(this.state.inputHex)
-		)
-	}
-
-	handleCardNumber(cardNumber) {
+	const handleCardNumber = (cardNumber) => {
 		let cardBits = parseInt(cardNumber, 10).toString(2)
-		this.setState({
-			cardNumber,
-			cardBits
-		})
+		let card = cardState
+		card.cardBits = cardBits
+		card.cardNumber = cardNumber
+		cardDispatch(actions.setCard(card))
 	}
 
-	handleFacilityCode(facilityCode) {
+	const handleFacilityCode = (facilityCode) => {
 		let facilityBits = parseInt(facilityCode, 10).toString(2)
-		this.setState({
-			facilityCode,
-			facilityBits
+		let card = cardState
+		card.facilityCode = facilityCode
+		card.facilityBits = facilityBits
+		cardDispatch(actions.setCard(card))
+	}
+
+	const handleBits = (inputBits) => {
+		let cut = cardState.binary.length - inputBits
+		let displayBinary = cardState.binary.slice(cut)
+		// Invert Bits
+		let binaryArray = displayBinary.split('')
+		binaryArray = binaryArray.map((x) => {
+			return x === '0' ? '1' : '0' // Lazy invert...
 		})
+		let inverted = binaryArray.join('')
+		// Resize...
+		let fontSize = 14.5
+		if (inputBits > 100) {
+			fontSize = 1450 / inputBits
+		}
+		// Update State
+		let card = cardState
+		card.bits = inputBits
+		card.fontSize = fontSize
+		card.dispBinary = displayBinary
+		card.invertedBinary = inverted
+		cardDispatch(actions.setCard(card))
 	}
 
-	handleBits(inputBits) {
-		let cut = this.state.binary.length - inputBits
-		let dispBinary = this.state.binary.slice(cut)
-		this.setState(
-			{
-				bits: inputBits,
-				dispBinary
-			},
-			() => this.handleDecodeBits()
-		)
-	}
-
-	handleHex(raw) {
+	const handleHex = (raw) => {
 		let inputHex = raw.toUpperCase()
 		let parsedHex = inputHex.match(/[0-9a-f]{2}/gi) || ''
 		let reversedHex
 		if (parsedHex.length > 0) {
-			if (this.state.reverse) {
+			if (settingsState.reverse) {
 				reversedHex = parsedHex.slice().reverse()
 			} else {
 				reversedHex = parsedHex
@@ -265,171 +257,199 @@ class Reader extends Component {
 				},
 				{ hex: '', bin: '' }
 			)
-			let cut = orderedHex.bin.length - this.state.bits || 0
+			let cut = orderedHex.bin.length - cardState.bits || 0
 			let binaryOut = orderedHex.bin.slice(cut)
-			this.setState(
-				{
-					inputHex,
-					dispHex,
-					orderedHex: orderedHex.hex,
-					binary: orderedHex.bin,
-					dispBinary: binaryOut,
-					showDecode: true
-				},
-				() => this.handleDecodeBits()
-			)
+			let card = cardState
+			card.inputHex = inputHex
+			card.dispHex = dispHex
+			card.orderedHex = orderedHex.hex
+			card.binary = orderedHex.bin
+			card.dispBinary = binaryOut
+			cardDispatch(actions.setCard(card))
+			settingsDispatch(actions.setShowDecode(true))
+			handleDecodeBits()
 		} else {
-			this.setState({
-				inputHex,
-				showDecode: false
-			})
+			let card = cardState
+			card.inputHex = inputHex
+			cardDispatch(actions.setCard(card))
+			settingsDispatch(actions.setShowDecode(false))
 		}
 	}
 
-	render() {
-		return (
-			<div>
-				<Card title="Card Decoder Tool" className="decoder">
+	return (
+		<div>
+			<div ref={contentRef}>
+				<Card title='Card Decoder Tool' className='decoder'>
 					<Row>
 						<Input
-							s={4}
-							name="group1"
-							type="checkbox"
-							value="reverse"
-							label="Reverse Raw Hex"
-							checked={this.state.reverse}
-							disabled={this.state.connected}
-							onClick={this.handleReverse}
+							s={3}
+							name='group1'
+							type='checkbox'
+							value='reverse'
+							label='Reverse Raw Hex'
+							checked={settingsState.reverse}
+							disabled={settingsState.connected}
+							onClick={() =>
+								settingsDispatch(actions.setReverse(!settingsState.reverse))
+							}
 						/>
 						<Input
-							s={4}
-							onClick={this.connectButton}
-							name="group1"
-							type="checkbox"
-							value="connected"
-							label="Connect USB Reader"
-							checked={this.state.connected}
+							s={3}
+							name='group1'
+							type='checkbox'
+							value='invert'
+							label='Invert Bits'
+							checked={settingsState.invertBits}
+							onClick={() => {
+								settingsDispatch(
+									actions.setInvertBits(!settingsState.invertBits)
+								)
+							}}
 						/>
 						<Input
-							s={4}
-							name="group1"
-							type="checkbox"
-							value="settings"
-							label="Show Reader Settings"
-							checked={this.state.showSettings}
-							onClick={this.handleShowSettings}
+							s={3}
+							onClick={connectButton}
+							name='group1'
+							type='checkbox'
+							value='connected'
+							label='Connect USB Reader'
+							checked={settingsState.connected}
+						/>
+						<Input
+							s={3}
+							name='group1'
+							type='checkbox'
+							value='settings'
+							label='Show Reader Settings'
+							checked={settingsState.showSettings}
+							onClick={handleShowSettings}
 						/>
 					</Row>
 					<Row>
-						{this.state.connected ? (
+						{settingsState.connected ? (
 							<Fragment>
-								<div className="col s5">
-									<label className="active" htmlFor="inputHex">
+								<div className='col s5'>
+									<label className='active' htmlFor='inputHex'>
 										Raw Hex Value
 									</label>
-									<p id="inputHex">{this.state.inputHex}</p>
+									<p id='inputHex'>{cardState.inputHex}</p>
 								</div>
-								<div className="col s2">
-									<label className="active" htmlFor="inputBits">
+								<div className='col s2'>
+									<label className='active' htmlFor='inputBits'>
 										Card Bits
 									</label>
-									<p id="inputBits">{this.state.bits}</p>
+									<p id='inputBits'>{cardState.bits}</p>
 								</div>
 							</Fragment>
 						) : (
 							<Fragment>
 								<Input
-									id="HEX"
-									onChange={this.handleUserInput}
+									id='HEX'
+									onChange={handleUserInput}
 									s={5}
-									label="Raw Hex Value"
-									value={this.state.inputHex}
+									label='Raw Hex Value'
+									value={cardState.inputHex}
 								/>
 								<Input
-									id="BITS"
-									onChange={this.handleUserInput}
+									id='BITS'
+									onChange={handleUserInput}
 									s={2}
-									label="Card Bits"
-									value={this.state.bits}
+									min='0'
+									type='number'
+									label='Card Bits'
+									value={cardState.bits}
 								/>
 							</Fragment>
 						)}
 						<Col s={1} />
-						{this.state.showSettings ? (
+						{settingsState.showSettings ? (
 							<Fragment>
-								<div className="col s2">
-									<label className="active">Facility Code</label>
-									<p>{this.state.facilityCode}</p>
+								<div className='col s2'>
+									<label className='active'>Facility Code</label>
+									<p>{cardState.facilityCode}</p>
 								</div>
-								<div className="col s2">
-									<label className="active">Card Number</label>
-									<p>{this.state.cardNumber}</p>
+								<div className='col s2'>
+									<label className='active'>Card Number</label>
+									<p>{cardState.cardNumber}</p>
 								</div>
 							</Fragment>
 						) : (
 							<Fragment>
 								<Input
-									id="FACILITY"
-									onChange={this.handleUserInput}
+									id='FACILITY'
+									onChange={handleUserInput}
 									s={2}
-									label="Facility Code"
-									value={this.state.facilityCode}
+									label='Facility Code'
+									value={cardState.facilityCode}
 								/>
 								<Input
-									id="CARD"
-									onChange={this.handleUserInput}
+									id='CARD'
+									onChange={handleUserInput}
 									s={2}
-									label="Card Number"
-									value={this.state.cardNumber}
+									label='Card Number'
+									value={cardState.cardNumber}
 								/>
 							</Fragment>
 						)}
 					</Row>
-					<Row style={this.state.showDecode ? null : { display: 'none' }}>
-						<div className="col s6">
-							<label className="active" htmlFor="parsedHex">
+					<Row style={settingsState.showDecode ? null : { display: 'none' }}>
+						<div className='col s6'>
+							<label className='active' htmlFor='parsedHex'>
 								Parsed Hex
 							</label>
-							<p id="parsedHex">{this.state.dispHex}</p>
+							<p id='parsedHex'>{cardState.dispHex}</p>
 						</div>
 						<div
-							style={this.state.reverse ? null : { display: 'none' }}
-							className="col s6"
+							style={settingsState.reverse ? null : { display: 'none' }}
+							className='col s6'
 						>
-							<label className="active" htmlFor="reverseHex">
+							<label className='active' htmlFor='reverseHex'>
 								Reversed Hex
 							</label>
-							<p id="reverseHex">{this.state.orderedHex}</p>
+							<p id='reverseHex'>{cardState.orderedHex}</p>
 						</div>
-						<div className="col s12 divider" style={{ margin: '5px' }} />
-						<div className="col s12">
-							<label htmlFor="bits">Binary</label>
-							<p className="binary">
+						<div className='col s12 divider' style={{ margin: '5px' }} />
+						<div className='col s12'>
+							<label htmlFor='bits'>
+								{settingsState.invertBits ? 'Inverted Binary' : 'Binary'}
+							</label>
+							<p className='binary'>
 								<Highlight
-									binary={this.state.dispBinary}
-									card={this.state.cardBits}
-									facility={this.state.facilityBits}
+									fontSize={cardState.fontSize}
+									binary={
+										settingsState.invertBits
+											? cardState.invertedBinary
+											: cardState.dispBinary
+									}
+									card={cardState.cardBits}
+									facility={cardState.facilityBits}
 								/>
 							</p>
 						</div>
 						<div
 							style={
-								!this.state.showSettings
+								!settingsState.showSettings
 									? { display: 'none' }
-									: this.state.decodeLength > this.state.bits
+									: cardState.decodeLength > cardState.bits
 									? { color: 'red', fontWeight: 'bold' }
 									: null
 							}
-							className="col s12 binary"
+							className='col s12 binary'
 						>
-							{this.state.decodeBinary.map((chunk, index) => (
+							{cardState.decodeBinary.map((chunk, index) => (
 								<span
 									style={
-										chunk === this.state.facilityChunk
-											? { backgroundColor: 'lightgreen' }
-											: chunk === this.state.cardChunk
-											? { backgroundColor: 'yellow' }
-											: null
+										chunk === cardState.facilityChunk
+											? {
+													backgroundColor: 'lightgreen',
+													fontSize: cardState.fontSize,
+											  }
+											: chunk === cardState.cardChunk
+											? {
+													backgroundColor: 'yellow',
+													fontSize: cardState.fontSize,
+											  }
+											: { fontSize: cardState.fontSize }
 									}
 									key={index}
 								>
@@ -437,65 +457,85 @@ class Reader extends Component {
 								</span>
 							))}
 						</div>
-						<div className="col s12 divider" />
+						<div className='col s12 divider' />
 					</Row>
-					<Row
-						style={this.state.showSettings ? null : { display: 'none' }}
-					>
-						<Col s={1} />
-						<div style={{ paddingTop: '15px' }} className="col s1">
+					<Row style={settingsState.showSettings ? null : { display: 'none' }}>
+						<div style={{ paddingTop: '15px' }} className='col s1'>
 							Facility Code
 						</div>
-						<div className="col s2">
-							<label className="active">Start Bit</label>
+						<div className='col s1'>
+							<label className='active'>Start</label>
 							<input
-								id="SITESTART"
-								onChange={this.handleUserInput}
-								value={this.state.facilityStart}
-								min="0"
-								type="number"
+								id='SITESTART'
+								onChange={handleUserInput}
+								value={readerSettingsState.facilityStart}
+								min='0'
+								type='number'
 							/>
 						</div>
-						<div className="col s2">
-							<label className="active">Number of Bits</label>
+						<div className='col s1'>
+							<label className='active'>Length</label>
 							<input
-								id="SITELENGTH"
-								onChange={this.handleUserInput}
-								value={this.state.facilityLength}
-								min="0"
-								type="number"
+								id='SITELENGTH'
+								onChange={handleUserInput}
+								value={readerSettingsState.facilityLength}
+								min='0'
+								type='number'
 							/>
 						</div>
-
-						<div style={{ paddingTop: '15px' }} className="col s1">
+						<Col s={1} />
+						<div style={{ paddingTop: '15px' }} className='col s1'>
 							Card Number
 						</div>
-						<div className="col s2">
-							<label className="active">Start Bit</label>
+						<div className='col s1'>
+							<label className='active'>Start</label>
 							<input
-								id="CARDSTART"
-								onChange={this.handleUserInput}
-								value={this.state.cardStart}
-								min="0"
-								type="number"
+								id='CARDSTART'
+								onChange={handleUserInput}
+								value={readerSettingsState.cardStart}
+								min='0'
+								type='number'
 							/>
 						</div>
-						<div className="col s2">
-							<label className="active">Number of Bits</label>
+						<div className='col s1'>
+							<label className='active'>Length</label>
 							<input
-								id="CARDLENGTH"
-								onChange={this.handleUserInput}
-								value={this.state.cardLength}
-								min="0"
-								type="number"
+								id='CARDLENGTH'
+								onChange={handleUserInput}
+								value={readerSettingsState.cardLength}
+								min='0'
+								type='number'
 							/>
 						</div>
-						<div className="col s12 divider" />
+						<Col s={2} />
+						<div className='col s3'>
+							<label className='active'>Common Format</label>
+							<select
+								name='selectFormat'
+								id='FORMAT'
+								onChange={handleUserInput}
+							>
+								{COMMON_CARD_FORMATS.map((i) => (
+									<option key={i.format} value={i.format}>
+										{i.format}
+									</option>
+								))}
+							</select>
+						</div>
+						<div className='col s12 divider' />
 					</Row>
 				</Card>
 			</div>
-		)
-	}
+			<Row className='decoder'>
+				<Col s={9} />
+				<Col s={3}>
+					<Button onClick={reactToPrintFn} style={{ float: 'right' }}>
+						<i className='material-icons left'>print</i>Print
+					</Button>
+				</Col>
+			</Row>
+		</div>
+	)
 }
 
 export default Reader
